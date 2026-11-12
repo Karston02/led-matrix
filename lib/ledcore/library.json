@@ -1,0 +1,8 @@
+{
+  "name": "ledcore",
+  "version": "1.0.0",
+  "description": "Hardware-independent logic for the LED album-art display (colour math, scheduling, playback policy). Header-only so it can be unit-tested on a desktop.",
+  "license": "MIT",
+  "frameworks": "*",
+  "platforms": "*"
+}

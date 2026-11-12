@@ -1,0 +1,15 @@
+# PlatformIO build output and editor state
+.pio/
+.vscode/
+.idea/
+.DS_Store
+
+# Secrets: never commit. Only the *.example template is tracked.
+**/secrets.h
+*.pem
+*.key
+.env
+
+# Local backups
+*.pre-refactor
+_backup/
