@@ -9,7 +9,9 @@
 // in flash (NVS) so the display survives reboots without re-running the login.
 class SpotifyAuth {
  public:
-  SpotifyAuth(const char* clientId, const char* seedRefreshToken);
+  // prefsNamespace keeps each account's rotated token separate in flash
+  // (NVS namespaces are at most 15 characters).
+  SpotifyAuth(const char* clientId, const char* seedRefreshToken, const char* prefsNamespace);
 
   // Opens flash storage and picks the refresh token to use. Call once in setup().
   void begin();
@@ -28,6 +30,7 @@ class SpotifyAuth {
 
   const char* clientId_;
   const char* seedRefreshToken_;
+  const char* prefsNamespace_;
   Preferences prefs_;
   String refreshToken_;
   String accessToken_;

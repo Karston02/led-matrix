@@ -28,8 +28,11 @@ const ledcore::PollTiming kPollTiming = {
 
 AlbumArtApp::AlbumArtApp(const Credentials& credentials)
     : wifi_(credentials.wifiSsid, credentials.wifiPassword),
-      auth_(credentials.spotifyClientId, credentials.spotifyRefreshToken),
-      spotify_(auth_),
+      // Account 1 keeps the original "spotify" namespace so an existing stored token survives.
+      account1_(credentials.spotifyClientId, credentials.spotifyRefreshToken, "spotify"),
+      account2_(credentials.spotifyClientId, credentials.spotifyRefreshToken2, "spotify2"),
+      accounts_{&account1_, &account2_},
+      accountCount_(*credentials.spotifyRefreshToken2 != '\0' ? 2 : 1),
       dataSources_{&weather_},
       clockScreen_(time_),
       weatherScreen_(weather_),
@@ -48,7 +51,10 @@ void AlbumArtApp::setup() {
   display_.setBrightness(config::display::kBrightnessDay);
 
   display_.showMessage("WiFi...");
-  auth_.begin();
+  for (size_t i = 0; i < accountCount_; ++i) {
+    accounts_[i]->auth.begin();
+  }
+  LOG_INFO("app", "following %u Spotify account(s)", static_cast<unsigned>(accountCount_));
   time_.begin();
   connectNetwork();
   idleSinceMs_ = millis();
@@ -103,12 +109,20 @@ void AlbumArtApp::poll() {
     pollDelayMs_ = config::timing::kPollWifiDownMs;
     return;
   }
-  if (!auth_.ensureAccessToken()) {
-    pollDelayMs_ = config::timing::kPollErrorMs;
-    return;
+
+  NowPlaying results[kMaxAccounts];
+  ledcore::NowStatus statuses[kMaxAccounts];
+  for (size_t i = 0; i < accountCount_; ++i) {
+    results[i] = fetchNowPlaying(*accounts_[i]);
+    statuses[i] = results[i].status;
+  }
+  const size_t chosen = ledcore::chooseAccount(statuses, accountCount_, activeAccount_);
+  if (chosen != activeAccount_) {
+    LOG_INFO("app", "switching to account %u", static_cast<unsigned>(chosen + 1));
+    activeAccount_ = chosen;
   }
 
-  const NowPlaying now = spotify_.fetchNowPlaying();
+  const NowPlaying& now = results[chosen];
   const uint32_t nowMs = millis();
   if (now.status == ledcore::NowStatus::Playing) {
     lastPlayingMs_ = nowMs;
@@ -130,6 +144,13 @@ void AlbumArtApp::poll() {
   if (decision.enterIdle) {
     enterIdle();
   }
+}
+
+NowPlaying AlbumArtApp::fetchNowPlaying(SpotifyAccount& account) {
+  if (!account.auth.ensureAccessToken()) {
+    return NowPlaying{};  // status Error: back off, leave the screen alone
+  }
+  return account.client.fetchNowPlaying();
 }
 
 void AlbumArtApp::showCover(const String& url) {

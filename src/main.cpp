@@ -14,10 +14,15 @@
 #error "Missing secrets.h: copy include/secrets.h.example to include/secrets.h and fill it in."
 #endif
 
+// The second account is optional; older secrets.h files don't define it.
+#ifndef SPOTIFY_REFRESH_TOKEN_2
+#define SPOTIFY_REFRESH_TOKEN_2 ""
+#endif
+
 namespace {
 
 const Credentials kCredentials = {WIFI_SSID, WIFI_PASS, SPOTIFY_CLIENT_ID,
-                                  SPOTIFY_REFRESH_TOKEN};
+                                  SPOTIFY_REFRESH_TOKEN, SPOTIFY_REFRESH_TOKEN_2};
 
 AlbumArtApp app(kCredentials);
 

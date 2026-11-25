@@ -78,8 +78,8 @@ constexpr uint32_t kWeatherMs = 5000;
 // https://open-meteo.com/en/docs/geocoding-api
 namespace weather {
 constexpr const char* kForecastUrl = "https://api.open-meteo.com/v1/forecast";
-constexpr float kLatitude = 30.2672f;    // Austin, TX
-constexpr float kLongitude = -97.7431f;
+constexpr float kLatitude = 30.0799f;    // Spring, TX
+constexpr float kLongitude = -95.4172f;
 constexpr bool kFahrenheit = true;
 constexpr uint32_t kRefreshMs = 15UL * 60UL * 1000UL;
 constexpr uint32_t kRetryMs = 60UL * 1000UL;

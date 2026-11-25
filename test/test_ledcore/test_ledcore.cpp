@@ -179,6 +179,32 @@ void test_error_backs_off_and_changes_nothing() {
   TEST_ASSERT_FALSE(d.enterIdle);
 }
 
+// ---------------------------------------------------------------- Account choice
+
+void test_account_on_screen_keeps_panel_while_playing() {
+  const NowStatus s[] = {NowStatus::Playing, NowStatus::Playing};
+  TEST_ASSERT_EQUAL_UINT32(1, chooseAccount(s, 2, 1));
+  TEST_ASSERT_EQUAL_UINT32(0, chooseAccount(s, 2, 0));
+}
+
+void test_other_account_takes_over_when_it_plays() {
+  const NowStatus s[] = {NowStatus::Paused, NowStatus::Playing};
+  TEST_ASSERT_EQUAL_UINT32(1, chooseAccount(s, 2, 0));
+}
+
+void test_no_one_playing_keeps_current_account() {
+  const NowStatus s[] = {NowStatus::Nothing, NowStatus::Paused};
+  TEST_ASSERT_EQUAL_UINT32(0, chooseAccount(s, 2, 0));
+  const NowStatus e[] = {NowStatus::Playing, NowStatus::Error};
+  TEST_ASSERT_EQUAL_UINT32(0, chooseAccount(e, 2, 1));  // the error doesn't hide account 1
+}
+
+void test_single_account_always_chosen() {
+  const NowStatus s[] = {NowStatus::Nothing};
+  TEST_ASSERT_EQUAL_UINT32(0, chooseAccount(s, 1, 0));
+  TEST_ASSERT_EQUAL_UINT32(0, chooseAccount(s, 1, 5));
+}
+
 // ---------------------------------------------------------------- Weather
 
 void test_weather_icons() {
@@ -232,6 +258,10 @@ int main(int, char**) {
   RUN_TEST(test_nothing_playing_while_idle_polls_slowly);
   RUN_TEST(test_nothing_playing_after_grace_enters_idle);
   RUN_TEST(test_error_backs_off_and_changes_nothing);
+  RUN_TEST(test_account_on_screen_keeps_panel_while_playing);
+  RUN_TEST(test_other_account_takes_over_when_it_plays);
+  RUN_TEST(test_no_one_playing_keeps_current_account);
+  RUN_TEST(test_single_account_always_chosen);
   RUN_TEST(test_weather_icons);
   RUN_TEST(test_next_available_skips_unavailable);
   RUN_TEST(test_next_available_stays_when_alone);

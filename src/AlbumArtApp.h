@@ -16,6 +16,15 @@
 #include "screens/ClockScreen.h"
 #include "screens/WeatherScreen.h"
 
+// One Spotify login: its token keeper and the client that uses it.
+struct SpotifyAccount {
+  SpotifyAccount(const char* clientId, const char* refreshToken, const char* prefsNamespace)
+      : auth(clientId, refreshToken, prefsNamespace), client(auth) {}
+
+  SpotifyAuth auth;
+  SpotifyClient client;
+};
+
 // Top-level application: wires the modules together and owns the display state
 // machine: cover art while music plays, a rotating set of info screens (clock,
 // weather) while idle, and a blank panel after a long idle spell.
@@ -37,11 +46,17 @@ class AlbumArtApp {
   void showCover(const String& url);
   void enterIdle();
   void refreshOneDataSource(uint32_t nowMs);
+  NowPlaying fetchNowPlaying(SpotifyAccount& account);
+
+  static constexpr size_t kMaxAccounts = 2;
 
   Display display_;
   WifiManager wifi_;
-  SpotifyAuth auth_;
-  SpotifyClient spotify_;
+  SpotifyAccount account1_;
+  SpotifyAccount account2_;
+  SpotifyAccount* accounts_[kMaxAccounts];
+  size_t accountCount_;
+  size_t activeAccount_ = 0;  // whose cover is (or was last) on screen
   TimeService time_;
 
   // Idle-time information screens and the data behind them.

@@ -13,7 +13,6 @@
 
 namespace {
 
-constexpr const char* kPrefsNamespace = "spotify";
 constexpr const char* kPrefsSeedKey = "seed";    // the token that came from secrets.h
 constexpr const char* kPrefsRotatedKey = "rt";   // newest token Spotify handed back
 constexpr int kDefaultExpirySeconds = 3600;
@@ -26,11 +25,12 @@ String encode(const String& value) {
 
 }  // namespace
 
-SpotifyAuth::SpotifyAuth(const char* clientId, const char* seedRefreshToken)
-    : clientId_(clientId), seedRefreshToken_(seedRefreshToken) {}
+SpotifyAuth::SpotifyAuth(const char* clientId, const char* seedRefreshToken,
+                         const char* prefsNamespace)
+    : clientId_(clientId), seedRefreshToken_(seedRefreshToken), prefsNamespace_(prefsNamespace) {}
 
 void SpotifyAuth::begin() {
-  prefs_.begin(kPrefsNamespace, false);
+  prefs_.begin(prefsNamespace_, false);
   loadRefreshToken();
 }
 
@@ -78,18 +78,18 @@ bool SpotifyAuth::refresh() {
 
   if (code != 200) {
     // Response bodies are not logged: they can echo request details.
-    LOG_ERROR("auth", "token refresh failed (HTTP %d)", code);
+    LOG_ERROR("auth", "%s: token refresh failed (HTTP %d)", prefsNamespace_, code);
     return false;
   }
 
   JsonDocument doc;
   if (deserializeJson(doc, response)) {
-    LOG_ERROR("auth", "token response was not valid JSON");
+    LOG_ERROR("auth", "%s: token response was not valid JSON", prefsNamespace_);
     return false;
   }
   const char* token = doc["access_token"] | "";
   if (*token == '\0') {
-    LOG_ERROR("auth", "token response had no access_token");
+    LOG_ERROR("auth", "%s: token response had no access_token", prefsNamespace_);
     return false;
   }
 
@@ -103,8 +103,8 @@ bool SpotifyAuth::refresh() {
   if (*rotated != '\0' && refreshToken_ != rotated) {
     refreshToken_ = rotated;
     prefs_.putString(kPrefsRotatedKey, refreshToken_);
-    LOG_INFO("auth", "stored rotated refresh token");
+    LOG_INFO("auth", "%s: stored rotated refresh token", prefsNamespace_);
   }
-  LOG_INFO("auth", "access token refreshed");
+  LOG_INFO("auth", "%s: access token refreshed", prefsNamespace_);
   return true;
 }

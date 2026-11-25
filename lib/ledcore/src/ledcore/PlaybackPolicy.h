@@ -3,11 +3,30 @@
 // Kept free of hardware and I/O so every branch can be unit-tested on a desktop.
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace ledcore {
 
 enum class NowStatus { Error, Nothing, Playing, Paused };
+
+// Picks which account's playback to show when several accounts are polled.
+//
+// The account on screen keeps the panel while it is playing, so two people
+// listening at once don't make it flip back and forth. Otherwise the first
+// account that is playing takes over. If none is playing, the account on screen
+// is kept, so its pause grace period and idle fade behave as with one account.
+inline size_t chooseAccount(const NowStatus* statuses, size_t count, size_t current) {
+  if (current < count && statuses[current] == NowStatus::Playing) {
+    return current;
+  }
+  for (size_t i = 0; i < count; ++i) {
+    if (statuses[i] == NowStatus::Playing) {
+      return i;
+    }
+  }
+  return current < count ? current : 0;
+}
 
 struct PollTiming {
   uint32_t playingMs;  // poll interval while music is (or was just) playing

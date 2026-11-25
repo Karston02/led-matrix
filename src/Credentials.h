@@ -8,4 +8,5 @@ struct Credentials {
   const char* wifiPassword;
   const char* spotifyClientId;
   const char* spotifyRefreshToken;
+  const char* spotifyRefreshToken2;  // optional second account; "" if unused
 };

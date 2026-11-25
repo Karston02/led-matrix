@@ -46,7 +46,7 @@ include/
   secrets.h.example     template for your credentials
 lib/ledcore/            hardware-independent logic, header-only, unit-tested
   Color.h               RGB565 unpack, blending, gamma LUT
-  PlaybackPolicy.h      what to do after each poll (show cover / go idle / back off)
+  PlaybackPolicy.h      what to do after each poll; which account to show
   Rotation.h            carousel selection
   Weather.h             weather code -> icon
   Schedule.h            day/night window
@@ -56,7 +56,7 @@ src/
   AlbumArtApp.*         wires modules together; display state machine
   Display.*             HUB75 driver, text, crossfade
   SpotifyAuth.*         refresh-token flow, rotated token kept in flash
-  SpotifyClient.*       now-playing request and parsing
+  SpotifyClient.*       now-playing request and parsing (one per account)
   CoverArt.*            download and JPEG decode
   ScreenCarousel.*      rotates the idle screens, skipping empty ones
   screens/              Screen interface; Clock and Weather screens
@@ -90,6 +90,8 @@ cp include/secrets.h.example include/secrets.h
 ```
 
 `include/secrets.h` is git-ignored.
+
+**Optional: a second account.** Add the other person under **User Management** in your app's dashboard settings, run the login script again while they are logged in to Spotify (use a private window, or click "Not you?"), and paste their token into `SPOTIFY_REFRESH_TOKEN_2`. The panel shows whichever account is playing; if both are, it stays on the one already on screen.
 
 **4. Build and flash.** Install [PlatformIO](https://platformio.org/), connect the controller's USB-C port, then:
 
@@ -131,7 +133,7 @@ CI (`.github/workflows/ci.yml`) runs the unit tests and a full firmware build on
 | Panel stays black or shows noise | Check the ribbon cable and power; try `cfg.driver = HUB75_I2S_CFG::FM6126A` in `Display.cpp` |
 | "Wi-Fi failed" on screen | The ESP32 only supports 2.4 GHz networks |
 | `token refresh failed (HTTP 400)` in the log | Refresh token revoked or wrong; rerun the login script |
-| Shows the clock while music plays | Spotify only reports playback for the account that owns the token |
+| Shows the clock while music plays | Spotify only reports playback for the accounts whose tokens are in `secrets.h` |
 | Weather screen never appears | Check the serial log for `refresh failed`; the screen is skipped until a fetch succeeds |
 
 ## Roadmap
